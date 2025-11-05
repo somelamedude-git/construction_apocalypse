@@ -12,7 +12,14 @@ const encryptPassword = async(password)=>{
 	}
 }
 
+const comparePassword = async(password, encrypted)=>{
+	const enc = encryptPassword(password);
+	return (enc == encrypted);
+}
+
+
 
 module.exports = {
-	encryptPassword
+	encryptPassword,
+	comparePassword
 };
