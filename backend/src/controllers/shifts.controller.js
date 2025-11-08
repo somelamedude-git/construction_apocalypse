@@ -15,8 +15,29 @@ const assign_shifts = async(req, res)=>{
             INNER JOIN employee e ON e.ID = eg.employee_id
             WHERE e.ID = ?;
         `, [user_id]);
+}
 
-	if(shifts.length==0){
-		const avail_ = await connection.promise().query(`
-		
 
+const show_upcoming_shifts = async(req, res)=>{
+	const user_id = req.user.id;
+	const today = new Date().getDay();
+	const now = new Date();
+	const current_time = now.toTimeString().split(' ')[0];
+
+	const [user_shifts] = await connection.promise().query(`
+	SELECT Shifts.* FROM Shifts INNER JOIN shift_group ON
+	Shifts.ID=shift_group.shift_id
+	INNER JOIN employee_groups ON employee_groups.group_id=shift_group.group_id
+	INNER JOIN employee ON employee.ID=employee_groups.employee_id WHERE employee.ID=? AND 
+	Shifts.Day=? AND start_time>? ORDER BY start_time ASC`, [user_id, today, current_time]);
+
+	return res.status(200).json({
+		success: true,
+		shifts: user_shifts
+	});
+}
+
+
+module.exports = {
+	show_upcoming_shifts
+}
