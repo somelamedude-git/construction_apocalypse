@@ -37,6 +37,8 @@ const show_upcoming_shifts = async(req, res)=>{
 	});
 }
 
+const check_in = async(req, res)=>{
+
 
 module.exports = {
 	show_upcoming_shifts

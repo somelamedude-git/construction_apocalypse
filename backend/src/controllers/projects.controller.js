@@ -1,6 +1,6 @@
 const connection = require('../db/db.js');
 
-const fetchProjects = async(req, res)=>{
+const fetchProject = async(req, res)=>{
 	const user_id = req.user.id;
 	const [use_projects] = await connection.promise().query(`
 	SELECT Project.ID FROM Project

@@ -32,5 +32,6 @@ const generateRefreshAccessToken = async(user_id)=>{
 
 
 module.exports = {
-	generateRefreshAccessToken
+	generateRefreshAccessToken,
+	generateAccessToken
 }
