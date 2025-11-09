@@ -242,3 +242,10 @@ const create_project_group = async (req, res) => {
     });
   }
 };
+
+
+module.exports = {
+	fetch_upcoming_projects,
+	select_project,
+	create_project_group
+}
