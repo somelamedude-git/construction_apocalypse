@@ -1,0 +1,28 @@
+.payment {
+  background-color: white;
+  padding: 30px 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 90%;
+  max-width: 600px;
+  margin-top: 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.payment p {
+  font-size: 1.1rem;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 8px;
+}
+
+.payment p:last-child {
+  border-bottom: none;
+}
+
+.payment span {
+  color: #00bfff;
+  font-weight: 600;
+}
