@@ -66,6 +66,14 @@ function ViewGroups() {
                       <p><strong>Project ID:</strong> {group.project || group.handling_project || "N/A"}</p>
                     </div>
                   </div>
+                  <div className="group-actions">
+                    <button
+                      onClick={() => navigate(`/manager/groups/${group.ID}/members`)}
+                      className="btn-primary"
+                    >
+                      View Members
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

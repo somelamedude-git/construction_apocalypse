@@ -16,6 +16,7 @@ import CreateGroup from "./CreateGroup";
 import ViewGroups from "./ViewGroups";
 import AvailableEmployees from "./AvailableEmployees";
 import ApplyForProject from "./ApplyForProject";
+import GroupMembers from "./GroupMembers";
 
 function Navbar() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -84,12 +85,14 @@ function Navbar() {
                   <li><Link to="/manager/groups">View Groups</Link></li>
                   <li><Link to="/manager/create-group">Create Group</Link></li>
                   <li><Link to="/manager/employees">Available Employees</Link></li>
+                  <li><Link to="/group-members">Group Members</Link></li>
                   <li><Link to="/profile">Profile</Link></li>
                   <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
                 </>
               ) : (
                 <>
                   <li><Link to="/pay">Pay</Link></li>
+                  <li><Link to="/group-members">Group Members</Link></li>
                   <li><Link to="/profile">Profile</Link></li>
                   <li><button onClick={handleLogout} className="logout-btn">Logout</button></li>
                 </>
@@ -159,6 +162,16 @@ function App() {
         <Route path="/manager/employees" element={
           <ProtectedRoute>
             <AvailableEmployees />
+          </ProtectedRoute>
+        } />
+        <Route path="/manager/groups/:groupId/members" element={
+          <ProtectedRoute>
+            <GroupMembers />
+          </ProtectedRoute>
+        } />
+        <Route path="/group-members" element={
+          <ProtectedRoute>
+            <GroupMembers />
           </ProtectedRoute>
         } />
       </Routes>

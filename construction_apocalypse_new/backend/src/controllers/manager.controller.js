@@ -199,7 +199,6 @@ const create_project_group = async (req, res) => {
 
     const group_id = crypto.randomBytes(4).toString("hex") + group_name;
     
-    // Get the next available shift ID (integer)
     const [maxShift] = await connection.promise().query(
       `SELECT MAX(ID) as max_id FROM Shifts`
     );
@@ -447,6 +446,45 @@ const fetch_groups = async (req, res) => {
     }
 };
 
+const fetch_group_members = async (req, res) => {
+    try {
+        const { group_id } = req.body;
+
+        if (!group_id) {
+            return res.status(400).json({
+                success: false,
+                message: "group_id is required",
+            });
+        }
+
+        const sql = `
+            SELECT employee.name, employee.email 
+            FROM employee
+            INNER JOIN employee_groups 
+                ON employee.ID = employee_groups.employee_id
+            WHERE employee_groups.group_id = ?
+        `;
+
+        const [employees_in_group] = await connection
+            .promise()
+            .query(sql, [group_id]);
+
+        return res.status(200).json({
+            success: true,
+            group_id,
+            employees: employees_in_group,
+        });
+
+    } catch (error) {
+        console.error("fetch_group_members error:", error);
+
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error",
+        });
+    }
+};
+
 
 
 module.exports = {
@@ -457,5 +495,6 @@ module.exports = {
   add_employee_in_group,
   check_manager_role,
   get_available_projects,
-  fetch_groups
+  fetch_groups,
+  fetch_group_members
 };

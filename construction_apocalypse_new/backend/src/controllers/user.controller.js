@@ -54,6 +54,14 @@ const getUserPay = async (req, res) => {
 	try {
 		const user_id = req.user.id;
 
+		// Get total_pay from employee table (updated on check-in)
+		const [employeeRows] = await connection.promise().query(
+			`SELECT total_pay FROM employee WHERE ID = ?`,
+			[user_id]
+		);
+
+		const actualTotalPay = employeeRows.length > 0 ? parseFloat(employeeRows[0].total_pay || 0) : 0;
+
 		const [completedShifts] = await connection.promise().query(`
 			SELECT 
 				Shifts.payment,
@@ -82,7 +90,7 @@ const getUserPay = async (req, res) => {
 		return res.status(200).json({
 			success: true,
 			pay: {
-				tentativePay: totalPay.toFixed(2),
+				tentativePay: actualTotalPay.toFixed(2), // Use actual total_pay from employee table
 				hoursWorked: totalHours.toFixed(2),
 				averageHourlyPay: averageHourlyPay,
 				totalShifts: completedShifts.length,

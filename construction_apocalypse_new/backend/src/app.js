@@ -11,8 +11,8 @@ app.use(express.json()); // Parse JSON request bodies
 const { registerUser, loginUser } = require('./controllers/user.login');
 const { getUserProfile, getUserPay } = require('./controllers/user.controller');
 const { fetchProject, show_project_details } = require('./controllers/projects.controller');
-const { show_upcoming_shifts, getTodayShifts } = require('./controllers/shifts.controller');
-const { fetch_upcoming_projects, select_project, create_project_group, fetch_employees, add_employee_in_group, check_manager_role, get_available_projects, fetch_groups } = require('./controllers/manager.controller');
+const { show_upcoming_shifts, getTodayShifts, check_in, checkout } = require('./controllers/shifts.controller');
+const { fetch_upcoming_projects, select_project, create_project_group, fetch_employees, add_employee_in_group, check_manager_role, get_available_projects, fetch_groups, fetch_group_members } = require('./controllers/manager.controller');
 
 // Import middleware
 const { authenticateToken } = require('./middleware/auth.middleware');
@@ -34,6 +34,8 @@ app.post('/api/projects/details', authenticateToken, show_project_details);
 // Shift routes
 app.get('/api/shifts/upcoming', authenticateToken, show_upcoming_shifts);
 app.get('/api/shifts/today', authenticateToken, getTodayShifts);
+app.post('/api/shifts/check-in', authenticateToken, check_in);
+app.post('/api/shifts/checkout', authenticateToken, checkout);
 
 // Manager routes
 app.get('/api/manager/check-role', authenticateToken, check_manager_role);
@@ -43,6 +45,7 @@ app.post('/api/manager/select-project', authenticateToken, select_project);
 app.post('/api/manager/create-group', authenticateToken, create_project_group);
 app.get('/api/manager/employees', authenticateToken, fetch_employees);
 app.post('/api/manager/add-employee', authenticateToken, add_employee_in_group);
+app.post('/api/manager/group-members', authenticateToken, fetch_group_members);
 app.get('/api/manager/groups', authenticateToken, fetch_groups);
 
 // Health check route

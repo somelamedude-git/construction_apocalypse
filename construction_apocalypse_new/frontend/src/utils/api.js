@@ -120,14 +120,17 @@ export const projectsAPI = {
 
 // Shifts API
 export const shiftsAPI = {
-  getUpcomingShifts: () => 
-    apiRequest('/shifts/upcoming', {
-      method: 'GET',
+  getUpcomingShifts: () => apiRequest('/shifts/upcoming'),
+  getTodayShifts: () => apiRequest('/shifts/today'),
+  checkIn: (shiftId) => 
+    apiRequest('/shifts/check-in', {
+      method: 'POST',
+      body: JSON.stringify({ shift_id: shiftId }),
     }),
-
-  getTodayShifts: () => 
-    apiRequest('/shifts/today', {
-      method: 'GET',
+  checkout: (shiftId) => 
+    apiRequest('/shifts/checkout', {
+      method: 'POST',
+      body: JSON.stringify({ shift_id: shiftId }),
     }),
 };
 
@@ -175,6 +178,17 @@ export const managerAPI = {
     apiRequest('/manager/groups', {
       method: 'GET',
     }),
+
+  getGroupMembers: (groupId) => 
+    apiRequest('/manager/group-members', {
+      method: 'POST',
+      body: JSON.stringify({ group_id: groupId }),
+    }),
+};
+
+// Group API (shared between manager and employee views)
+export const groupAPI = {
+  getMembers: (groupId) => managerAPI.getGroupMembers(groupId),
 };
 
 // User API
