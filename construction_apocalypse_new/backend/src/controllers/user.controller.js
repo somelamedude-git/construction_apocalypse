@@ -1,6 +1,5 @@
 const connection = require('../db/db.js');
 
-// Get user profile information
 const getUserProfile = async (req, res) => {
 	try {
 		const user_id = req.user.id;
@@ -19,9 +18,8 @@ const getUserProfile = async (req, res) => {
 			});
 		}
 
-		// Get current project if user is in any group
 		const [currentProject] = await connection.promise().query(`
-			SELECT Project.ID, Project.name 
+			SELECT Project.ID 
 			FROM Project
 			INNER JOIN user_groups ON Project.ID = user_groups.project
 			INNER JOIN employee_groups ON user_groups.ID = employee_groups.group_id
@@ -52,12 +50,10 @@ const getUserProfile = async (req, res) => {
 	}
 };
 
-// Get user pay information
 const getUserPay = async (req, res) => {
 	try {
 		const user_id = req.user.id;
 
-		// Get all completed shifts with payment information
 		const [completedShifts] = await connection.promise().query(`
 			SELECT 
 				Shifts.payment,
@@ -73,7 +69,6 @@ const getUserPay = async (req, res) => {
 			ORDER BY Shifts.Day DESC, Shifts.start_time DESC
 		`, [user_id]);
 
-		// Calculate totals
 		let totalPay = 0;
 		let totalHours = 0;
 

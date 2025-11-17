@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { authAPI } from "../utils/api";
+import { authAPI, managerAPI } from "../utils/api";
 import "../styles/login.css";
 
 function Login() {
@@ -10,7 +10,6 @@ function Login() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (authAPI.isAuthenticated()) {
       navigate("/");
@@ -25,10 +24,20 @@ function Login() {
     try {
       const response = await authAPI.login({ email, password });
       if (response.success) {
-        // Trigger a custom event to update navbar
         window.dispatchEvent(new Event('storage'));
-        // Redirect to home page after successful login
-        navigate("/");
+        
+        // Check if user is a manager and redirect accordingly
+        try {
+          const roleResponse = await managerAPI.checkRole();
+          if (roleResponse.success && roleResponse.is_manager) {
+            navigate("/manager/dashboard");
+          } else {
+            navigate("/");
+          }
+        } catch (roleErr) {
+          // If role check fails, default to regular user home
+          navigate("/");
+        }
       } else {
         setError(response.message || "Login failed");
       }

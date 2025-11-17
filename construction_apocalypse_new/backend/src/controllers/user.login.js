@@ -3,8 +3,8 @@ const { encryptPassword, comparePassword } = require('../utils/password.util');
 const bcrypt = require('bcrypt');
 const random = require('random-string-generator');
 const { generateRefreshAccessToken, generateAccessToken } = require('../utils/auth.utils');
+require('dotenv').config('../.env');
 
-// Add error handling later
 
 const already_exists = async (email)=>{
 	try {
@@ -20,7 +20,6 @@ const registerUser = async(req, res)=>{
 	try {
 		const {name, age, email, password} = req.body;
 		
-		// Validate input
 		if (!name || !age || !email || !password) {
 			return res.status(400).json({
 				success: false,
@@ -42,7 +41,6 @@ const registerUser = async(req, res)=>{
 
 		const random_user_ID = random(7) + "_" + Buffer.from(concat).toString("base64").slice(0, 5);
 		
-		// Generate refresh token directly (don't try to update DB for non-existent user)
 		const jwt = require('jsonwebtoken');
 		const refresh_access_token = jwt.sign(
 			{ id: random_user_ID },
@@ -71,49 +69,72 @@ const registerUser = async(req, res)=>{
 	}
 }
 
-const loginUser = async(req, res)=>{
-	const { email, password } = req.body;
-	const exists = await already_exists(email);
-	if(!exists){
-		return res.status(400).json({
-			message: "Wrong credentials have been entered"
-		});
-	}
-	
-	const user_id = exists.ID;
-	const refresh_access_token = await generateRefreshAccessToken(user_id);
-	await connection.promise().query(
-		"UPDATE employee set refresh_access_token=? WHERE email=?", [refresh_access_token, email]
-	);
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: "Email and password are required."
+      });
+    }
 
-	const [user_password_result] = await connection.promise().query(
-		"SELECT password FROM employee WHERE email = ?", [email]
-	);
+    const user = await already_exists(email);
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "Wrong credentials have been entered."
+      });
+    }
 
-	const stored_password = user_password_result[0]?.password;
-	if (!stored_password) {
-		return res.status(400).json({
-			message: "Wrong credentials have been entered"
-		});
-	}
+    const userId = user.ID;
 
-	const is_correct = await bcrypt.compare(password, stored_password);
-	if(!is_correct){
-		return res.status(400).json({
-			message: "Wrong credentials have been entered"
-		});
-	}
+    const [rows] = await connection.promise().query(
+      "SELECT password FROM employee WHERE email = ?",
+      [email]
+    );
 
-	// Generate access token for the user
-	const accessToken = await generateAccessToken(user_id, email);
+    const storedPassword = rows[0]?.password;
+    if (!storedPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Wrong credentials have been entered."
+      });
+    }
 
-	return res.status(200).json({
-		success: true,
-		message: "Successful login",
-		token: accessToken,
-		user_id: user_id
-	});
-}
+    const passwordMatch = await bcrypt.compare(password, storedPassword);
+    if (!passwordMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Wrong credentials have been entered."
+      });
+    }
+
+    const refreshToken = await generateRefreshAccessToken(userId);
+    const accessToken = await generateAccessToken(userId, email);
+
+    await connection.promise().query(
+      "UPDATE employee SET refresh_access_token = ? WHERE email = ?",
+      [refreshToken, email]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: "Login successful.",
+      data: {
+        user_id: userId,
+        access_token: accessToken,
+      }
+    });
+
+  } catch (error) {
+    console.error("Login Error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error.",
+    });
+  }
+};
 
 
 module.exports = {

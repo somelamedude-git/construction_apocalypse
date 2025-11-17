@@ -89,8 +89,8 @@ export const authAPI = {
       body: JSON.stringify(credentials),
     });
     // Automatically store token if provided
-    if (response.token) {
-      localStorage.setItem('token', response.token);
+    if (response.data.access_token) {
+      localStorage.setItem('token', response.data.access_token);
     }
     return response;
   },
@@ -133,8 +133,18 @@ export const shiftsAPI = {
 
 // Manager API
 export const managerAPI = {
-  getUpcomingProjects: () => 
+  checkRole: () => 
+    apiRequest('/manager/check-role', {
+      method: 'GET',
+    }),
+
+  getCurrentProject: () => 
     apiRequest('/manager/projects', {
+      method: 'GET',
+    }),
+
+  getAvailableProjects: () => 
+    apiRequest('/manager/available-projects', {
       method: 'GET',
     }),
 
@@ -148,6 +158,22 @@ export const managerAPI = {
     apiRequest('/manager/create-group', {
       method: 'POST',
       body: JSON.stringify(groupData),
+    }),
+
+  getEmployees: () => 
+    apiRequest('/manager/employees', {
+      method: 'GET',
+    }),
+
+  addEmployeeToGroup: (employeeId, groupId) => 
+    apiRequest('/manager/add-employee', {
+      method: 'POST',
+      body: JSON.stringify({ employee_id: employeeId, group_id: groupId }),
+    }),
+
+  getGroups: () => 
+    apiRequest('/manager/groups', {
+      method: 'GET',
     }),
 };
 

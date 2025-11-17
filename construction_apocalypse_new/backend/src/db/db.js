@@ -1,11 +1,10 @@
 const mysql2 = require('mysql2');
 
-// Database configuration - update these with your actual database credentials
 const connection = mysql2.createConnection({
 	host: process.env.DB_HOST || "localhost",
-	user: process.env.DB_USER || "root",
-	password: process.env.DB_PASSWORD || "",
-	database: process.env.DB_NAME || "construction_db"
+	user: process.env.DB_USER || "cool_user",
+	password: process.env.DB_PASSWORD || "Charger@2006",
+	database: process.env.DB_NAME || "construction"
 });
 
 connection.connect(err =>{

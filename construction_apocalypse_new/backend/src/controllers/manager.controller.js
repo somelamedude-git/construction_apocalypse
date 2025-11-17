@@ -2,6 +2,7 @@ const connection = require('../db/db.js');
 const random = require('random-string-generator');
 const crypto = require('crypto');
 const {randomBytes} = require('crypto');
+const { isManager } = require('../utils/auth.utils');
 
 const fetch_upcoming_projects = async (req, res) => {
     try {
@@ -20,7 +21,7 @@ const fetch_upcoming_projects = async (req, res) => {
         }
 
         const [current_project] = await connection.promise().query(
-            `SELECT * 
+            `SELECT Project.* 
              FROM Project 
              INNER JOIN Manager 
              ON Manager.handling_project = Project.ID 
@@ -248,8 +249,213 @@ const create_project_group = async (req, res) => {
   }
 };
 
+const fetch_employees = async (req, res) => {
+    try {
+        const user = req.user;
+
+        const manager = await isManager(user);
+
+        if (!manager) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Manager permissions required."
+            });
+        }
+
+        const [users] = await connection.promise().query(`
+            SELECT * 
+            FROM employee 
+            WHERE ID NOT IN (
+                SELECT employee_id FROM employee_groups
+            );
+        `);
+
+        return res.status(200).json({
+            success: true,
+            users
+        });
+    } catch (err) {
+        console.error("Error in fetch_employees:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+const add_employee_in_group = async (req, res) => {
+    try {
+        const user = req.user;
+        const { employee_id, group_id } = req.body;
+
+        if (!employee_id || !group_id) {
+            return res.status(400).json({ 
+                success: false,
+                message: "employee_id and group_id are required" 
+            });
+        }
+
+        const manager = await isManager(user);
+        if (!manager) {
+            return res.status(403).json({ 
+                success: false,
+                message: "Only managers can add employees to groups" 
+            });
+        }
+
+        const [employees] = await connection.promise().query(
+            `SELECT employee_id FROM employee_groups WHERE group_id = ?`,
+            [group_id]
+        );
+
+        const [project] = await connection.promise().query(
+            `SELECT Project.Employees_per_Shift FROM Project INNER JOIN Manager ON Manager.handling_project=Project.ID WHERE Manager.ID=?`, [user.id]);
+
+        if (!project[0]) {
+            return res.status(404).json({
+                success: false,
+                message: "Project not found for this manager"
+            });
+        }
+
+        if (employees.length >= project[0].Employees_per_shift) {
+            return res.status(400).json({
+                success: false,
+                message: "Cannot add employee: group is full"
+            });
+        }
+
+        await connection.promise().query(
+            `INSERT INTO employee_groups(employee_id, group_id) VALUES (?, ?)`,
+            [employee_id, group_id]
+        );
+
+        return res.status(201).json({
+            success: true,
+            message: "Employee added to group successfully"
+        });
+
+    } catch (err) {
+        console.error("Error adding employee to group:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+const check_manager_role = async (req, res) => {
+    try {
+        const user = req.user;
+        const manager = await isManager(user);
+        
+        return res.status(200).json({
+            success: true,
+            is_manager: manager
+        });
+    } catch (err) {
+        console.error("Error checking manager role:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+const get_available_projects = async (req, res) => {
+    try {
+        const user_id = req.user.id;
+
+        const [user] = await connection.promise().query(
+            `SELECT * FROM Manager WHERE ID = ?`,
+            [user_id]
+        );
+
+        if (user.length === 0) {
+            return res.status(401).json({
+                success: false,
+                message: "Unauthorized: manager not found",
+            });
+        }
+
+        // Get projects that don't have a manager assigned
+        const [available_projects] = await connection.promise().query(
+            `SELECT Project.ID, Project.name,  Project.hours_per_shift, 
+                    Project.required_shifts, Project.pay_per_hour
+             FROM Project
+             WHERE Project.ID NOT IN (
+                 SELECT handling_project 
+                 FROM Manager 
+                 WHERE handling_project IS NOT NULL
+             )`
+        );
+
+        return res.status(200).json({
+            success: true,
+            projects: available_projects
+        });
+    } catch (err) {
+        console.error("Error fetching available projects:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Server error",
+        });
+    }
+};
+
+const fetch_groups = async (req, res) => {
+    try {
+        const user = req.user;
+
+        if (!user?.id) {
+            return res.status(401).json({
+                success: false,
+                message: "User not authenticated"
+            });
+        }
+
+        const manager = await isManager(user);
+        if (!manager) {
+            return res.status(403).json({
+                success: false,
+                message: "Access denied. Manager permissions required."
+            });
+        }
+
+        const [groups] = await connection.promise().query(
+            `
+            SELECT ug.*, m.handling_project
+            FROM user_groups AS ug
+            INNER JOIN Manager AS m
+                ON ug.project = m.handling_project
+            WHERE m.ID = ?
+            `,
+            [user.id] 
+        );
+
+        return res.status(200).json({
+            success: true,
+            groups
+        });
+
+    } catch (err) {
+        console.error("Error in fetch_groups:", err);
+        return res.status(500).json({
+            success: false,
+            message: "Internal server error"
+        });
+    }
+};
+
+
+
 module.exports = {
   fetch_upcoming_projects,
   select_project,
-  create_project_group
+  create_project_group,
+  fetch_employees,
+  add_employee_in_group,
+  check_manager_role,
+  get_available_projects,
+  fetch_groups
 };

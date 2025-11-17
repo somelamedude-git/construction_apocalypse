@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const connection = require('../db/db.js');
+require('dotenv').config('../.env');
 
 const generateAccessToken = async(user_id, email)=>{
 	return jwt.sign({
@@ -18,8 +19,6 @@ const generateRefreshAccessToken = async(user_id)=>{
 			expiresIn: process.env.REFRESH_TOKEN_EXPIRY || '7d'
 		});
 
-		// Only update database if connection is available
-		// For registration, user doesn't exist yet, so skip the update
 		if (connection && connection.state !== 'disconnected') {
 			try {
 				const [result] = await connection.promise().query(
@@ -44,9 +43,29 @@ const generateRefreshAccessToken = async(user_id)=>{
 }
 
 
+const isManager = async (user) => {
+    try {
+        if (!user || !user.id) {
+            // No user → cannot be manager
+            return false;
+        }
 
+        const [rows] = await connection
+            .promise()
+            .query(
+                `SELECT 1 FROM Manager WHERE ID = ? LIMIT 1`,
+                [user.id]
+            );
+
+        return rows.length > 0; // true if manager, false otherwise
+    } catch (err) {
+        console.error("Error in isManager():", err);
+        return false; // Fail-safe — treat as not manager
+    }
+};
 
 module.exports = {
 	generateRefreshAccessToken,
-	generateAccessToken
+	generateAccessToken,
+	isManager
 }
