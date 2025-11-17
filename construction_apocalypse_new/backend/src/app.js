@@ -4,7 +4,12 @@ require('dotenv').config(); // Load environment variables
 const app = express();
 
 // Middleware
-app.use(cors()); // Enable CORS for all routes
+// CORS configuration - allow requests from frontend
+// Set FRONTEND_URL environment variable in Render dashboard: https://construction-apocalypse.vercel.app/
+app.use(cors({
+	origin: process.env.FRONTEND_URL || '*', // Defaults to '*' (all origins) if not set
+	credentials: true
+}));
 app.use(express.json()); // Parse JSON request bodies
 
 // Import controllers
@@ -73,6 +78,7 @@ app.use((req, res) => {
 
 // Start server
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server is running on http://localhost:${PORT}`);
+const HOST = process.env.HOST || '0.0.0.0'; // Listen on all interfaces for deployment
+app.listen(PORT, HOST, () => {
+  console.log(`Server is running on http://${HOST}:${PORT}`);
 });
